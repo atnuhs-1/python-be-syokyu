@@ -1,13 +1,8 @@
 import os
-from datetime import datetime
 
 from fastapi import FastAPI
-from pydantic import BaseModel, Field
 
-from app.const import TodoItemStatusCode
-
-from .models.item_model import ItemModel
-from .models.list_model import ListModel
+from app.routers import item_router, list_router
 
 DEBUG = os.environ.get("DEBUG", "") == "true"
 
@@ -26,58 +21,16 @@ if DEBUG:
     )
 
 
-class NewTodoItem(BaseModel):
-    """TODO項目新規作成時のスキーマ."""
-
-    title: str = Field(title="Todo Item Title", min_length=1, max_length=100)
-    description: str | None = Field(default=None, title="Todo Item Description", min_length=1, max_length=200)
-    due_at: datetime | None = Field(default=None, title="Todo Item Due")
+@app.get("/echo", tags=["Hello"])
+def get_hello(message: str, name: str):
+    return {"Message": f"{message} {name}!"}
 
 
-class UpdateTodoItem(BaseModel):
-    """TODO項目更新時のスキーマ."""
-
-    title: str | None = Field(default=None, title="Todo Item Title", min_length=1, max_length=100)
-    description: str | None = Field(default=None, title="Todo Item Description", min_length=1, max_length=200)
-    due_at: datetime | None = Field(default=None, title="Todo Item Due")
-    complete: bool | None = Field(default=None, title="Set Todo Item status as completed")
+@app.get("/health", tags=["System"])
+def get_health():
+    return {"status": "ok"}
 
 
-class ResponseTodoItem(BaseModel):
-    id: int
-    todo_list_id: int
-    title: str = Field(title="Todo Item Title", min_length=1, max_length=100)
-    description: str | None = Field(default=None, title="Todo Item Description", min_length=1, max_length=200)
-    status_code: TodoItemStatusCode = Field(title="Todo Status Code")
-    due_at: datetime | None = Field(default=None, title="Todo Item Due")
-    created_at: datetime = Field(title="datetime that the item was created")
-    updated_at: datetime = Field(title="datetime that the item was updated")
-
-
-class NewTodoList(BaseModel):
-    """TODOリスト新規作成時のスキーマ."""
-
-    title: str = Field(title="Todo List Title", min_length=1, max_length=100)
-    description: str | None = Field(default=None, title="Todo List Description", min_length=1, max_length=200)
-
-
-class UpdateTodoList(BaseModel):
-    """TODOリスト更新時のスキーマ."""
-
-    title: str | None = Field(default=None, title="Todo List Title", min_length=1, max_length=100)
-    description: str | None = Field(default=None, title="Todo List Description", min_length=1, max_length=200)
-
-
-class ResponseTodoList(BaseModel):
-    """TODOリストのレスポンススキーマ."""
-
-    id: int
-    title: str = Field(title="Todo List Title", min_length=1, max_length=100)
-    description: str | None = Field(default=None, title="Todo List Description", min_length=1, max_length=200)
-    created_at: datetime = Field(title="datetime that the item was created")
-    updated_at: datetime = Field(title="datetime that the item was updated")
-
-
-@app.get("/hello", tags=["Hello"])
-def get_hello():
-    return {"Message": "Hello FastAPI!"}
+# ルーターの登録
+app.include_router(list_router.router)
+app.include_router(item_router.router)
